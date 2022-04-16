@@ -6,6 +6,7 @@ from torch.nn.utils.rnn import pad_sequence  # pad batch
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image  # Load img
 import torchvision.transforms as transforms
+from AnnotationCleaner import AnnotationCleaner
 
 
 # We want to convert text -> numerical values
@@ -83,8 +84,9 @@ class FlickrDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
 
+        caption = AnnotationCleaner([caption]).clean()
         numericalized_caption = [self.vocab.stoi["<SOS>"]]
-        numericalized_caption += self.vocab.numericalize(caption)
+        numericalized_caption += self.vocab.numericalize(caption[0])
         numericalized_caption.append(self.vocab.stoi["<EOS>"])
 
         return img, torch.tensor(numericalized_caption)
