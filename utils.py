@@ -56,9 +56,9 @@ def print_examples(model, device, dataset):
     model.train()
 
 
-def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
+def save_checkpoint(state, output_folder, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
-    torch.save(state, filename)
+    torch.save(state, f"{output_folder}{filename}")
 
 
 def load_checkpoint(checkpoint, model, optimizer):
