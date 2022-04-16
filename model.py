@@ -22,8 +22,6 @@ class EncoderCNN(nn.Module):
             self.model = torch.hub.load('pytorch/vision:v0.10.0', 'vgg19', pretrained=True)
             self.model.classifier[6] = nn.Linear(self.model.classifier[6].in_features, embed_size)
 
-        # self.inception = models.inception_v3(pretrained=True, aux_logits=False)
-        # self.inception.fc = nn.Linear(self.inception.fc.in_features, embed_size)
         self.relu = nn.ReLU()
         self.times = []
         self.dropout = nn.Dropout(0.5)
@@ -51,9 +49,9 @@ class DecoderRNN(nn.Module):
 
 
 class CNNtoRNN(nn.Module):
-    def __init__(self, embed_size, hidden_size, vocab_size, num_layers):
+    def __init__(self, encoder_choice, embed_size, hidden_size, vocab_size, num_layers):
         super(CNNtoRNN, self).__init__()
-        self.encoderCNN = EncoderCNN(embed_size)
+        self.encoderCNN = EncoderCNN(embed_size, encoder_choice=encoder_choice)
         self.decoderRNN = DecoderRNN(embed_size, hidden_size, vocab_size, num_layers)
 
     def forward(self, images, captions):
