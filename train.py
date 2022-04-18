@@ -18,7 +18,7 @@ torch.cuda.empty_cache()
 encoder_input_sizes = {'InceptionV3': 299, 'AlexNet': 227, 'VGG': 244}  # TODO: Check if right for AlexNet and VGG
 
 # TODO: CHOICES
-ENCODER_CHOICE = 'VGG'  # ['InceptionV3', 'AlexNet', 'VGG']
+ENCODER_CHOICE = 'AlexNet'  # ['InceptionV3', 'AlexNet', 'VGG']
 
 load_model = False
 save_model = True
@@ -26,10 +26,10 @@ train_CNN = False  # If False, only fine-tune. If True, train the full CNN
 
 # TODO: Update hyperparameters as need be
 EMBED_SIZE = 512  # [256, 512]
-HIDDEN_SIZE = 512  # [256, 512]
+HIDDEN_SIZE = 256  # [256, 512]
 NUM_LAYERS = 1  #
 LEARNING_RATE = 3e-4
-NUM_EPOCHS = 1  # [25, 50]
+NUM_EPOCHS = 50  # [25, 50]
 BATCH_SIZE = 256  # [128, 256]
 NUM_WORKERS = 2
 
@@ -42,9 +42,9 @@ Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
 def train():
     transform = transforms.Compose(
         [
-            transforms.Resize((356, 356)),
-            transforms.RandomCrop(encoder_input_sizes[ENCODER_CHOICE]),  # Depending on which encoder we use, we crop images accordingly.
-            # This is data augmentation of sorts since we are doing random crop
+            transforms.Resize((encoder_input_sizes[ENCODER_CHOICE], encoder_input_sizes[ENCODER_CHOICE])),
+            # transforms.RandomCrop(encoder_input_sizes[ENCODER_CHOICE]),  # Depending on which encoder we use, we crop images accordingly.
+            # # This is data augmentation of sorts since we are doing random crop
             transforms.ToTensor(),
             # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -118,7 +118,7 @@ def train():
 
     for epoch in range(NUM_EPOCHS):
         # Uncomment the line below to see a couple of test cases
-        # print_examples(model, device, train_dataset)
+        print_examples(model, device, train_dataset)
 
         # Set the model to train mode
         model.train()
@@ -130,15 +130,19 @@ def train():
                 "optimizer": optimizer.state_dict(),
                 "step": step,
             }
-            save_checkpoint(checkpoint, output_folder=OUTPUT_FOLDER)
+            save_checkpoint(checkpoint, output_folder=OUTPUT_FOLDER, filename=f"my_checkpoint.pth.tar-epoch={epoch}")
 
+        print(f"Training epoch: {epoch}")
         for idx, (imgs, captions) in tqdm(enumerate(train_loader), total=len(train_loader), leave=False):
             imgs = imgs.to(device)
             captions = captions.to(device)
 
+            # print(captions)
+
             outputs = model(imgs, captions[:-1])  # Want the model to predict the END token so we don't send the last one in
             loss = criterion(outputs.reshape(-1, outputs.shape[2]), captions.reshape(-1))
 
+            # print(outputs)
             writer.add_scalar("Training loss", loss.item(), global_step=step)
             step += 1
 
@@ -149,6 +153,9 @@ def train():
 
             train_batch_loss.append(loss.item())
 
+            # Clear GPU cache
+            torch.cuda.empty_cache()
+
         train_mean_loss.append(np.mean(train_batch_loss))
 
         # Validation
@@ -156,6 +163,7 @@ def train():
 
         # Set the model to evaluation mode
         model.eval()
+        print(f"Validation epoch: {epoch}")
         for idx, (imgs, captions) in tqdm(enumerate(val_loader), total=len(val_loader), leave=False):
             imgs = imgs.to(device)
             captions = captions.to(device)
@@ -174,10 +182,10 @@ def train():
         # del(train_loader)
         # del(val_loader)
 
-    # Save the training and validation loss
-    loss_df = pd.DataFrame({"train_mean_loss": train_mean_loss, "val_mean_loss": val_mean_loss})
-    loss_csvfile = f"{OUTPUT_FOLDER}Loss.csv"
-    loss_df.to_csv(loss_csvfile)
+        # Save the training and validation loss
+        loss_df = pd.DataFrame({"train_mean_loss": train_mean_loss, "val_mean_loss": val_mean_loss})
+        loss_csvfile = f"{OUTPUT_FOLDER}Loss.csv"
+        loss_df.to_csv(loss_csvfile)
 
 
 if __name__ == "__main__":
