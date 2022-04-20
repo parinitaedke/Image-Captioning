@@ -12,24 +12,25 @@ class AnnotationCleaner:
             self.clean_annotations.append(self.run(annotation))
         return self.clean_annotations
 
-    @staticmethod
+
     def remove_punctuation(self, annotation):
         # remove the punctuations
         return re.sub(r'[^\w\s]', '', annotation)
 
-    @staticmethod
+
     def lower(self, annotation):
         # convert annotations to lower case
         return annotation.lower()
 
-    @staticmethod
+
     def remove_extra_space(self, annotation):
         # remove extra spaces
         return re.sub(r" {2,}", " ", annotation)
 
     def run(self, annotation):
-        output = self.remove_punctuation(annotation)
-        output = self.lower(output)
+        # print(annotation)
+        output = self.remove_punctuation(annotation=annotation)
+        output = self.lower(annotation=output)
         output = self.remove_extra_space(output)
         return output
 

@@ -33,15 +33,15 @@ HIDDEN_SIZE = 256  # [256, 512]
 NUM_LAYERS = 1  #
 LEARNING_RATE = 3e-4
 NUM_EPOCHS = 50  # [25, 50]
-BATCH_SIZE = 128  # [128, 256]
-NUM_WORKERS = 2
+BATCH_SIZE = 256  # [128, 256]
+NUM_WORKERS = 1
 
 # Set DEVICE
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {DEVICE}")
 
 # Determines the OUTPUT FOLDER and where to store results
-OUTPUT_FOLDER = f"OUTPUTS/encoder={ENCODER_CHOICE}-embed_size={EMBED_SIZE}-hidden_size={HIDDEN_SIZE}-num_layers={NUM_LAYERS}-lr={LEARNING_RATE}-epochs={NUM_EPOCHS}-bs={BATCH_SIZE}-num_workers={NUM_WORKERS}-trainCNN={TRAIN_CNN}/"
+OUTPUT_FOLDER = f"FINAL/encoder={ENCODER_CHOICE}-embed_size={EMBED_SIZE}-hidden_size={HIDDEN_SIZE}-num_layers={NUM_LAYERS}-lr={LEARNING_RATE}-epochs={NUM_EPOCHS}-bs={BATCH_SIZE}-num_workers={NUM_WORKERS}-trainCNN={TRAIN_CNN}/"
 Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
 
 
@@ -64,7 +64,7 @@ def train():
         batch_size=BATCH_SIZE,
         num_workers=NUM_WORKERS,
     )
-
+    print(f"Vocab size = {len(train_dataset.vocab)}")
     val_loader, val_dataset = get_loader(
         root_folder="flickr8k/images",
         annotation_file="flickr8k/val_captions.txt",
@@ -95,6 +95,10 @@ def train():
     model = EncoderToDecoder(ENCODER_CHOICE, EMBED_SIZE, HIDDEN_SIZE, VOCAB_SIZE, NUM_LAYERS).to(DEVICE)
     criterion = nn.CrossEntropyLoss(ignore_index=train_dataset.vocab.stoi["<PAD>"])
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+    # THIS WAS JUST FOR DUMMY SAKE
+    # DUMMY_model = EncoderToDecoder(ENCODER_CHOICE, EMBED_SIZE, HIDDEN_SIZE, VOCAB_SIZE, NUM_LAYERS).to(DEVICE)
+    # DUMMY_optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # Only finetune the CNN if TRAIN_CNN is False.
     # Train the full CNN is TRAIN_CNN is True
@@ -136,6 +140,10 @@ def train():
             # The epoch part in the filename helps save the model at each epoch
             # TODO: maybe change it to save the model at every logging_interval?
             save_checkpoint(checkpoint, output_folder=OUTPUT_FOLDER, filename=f"my_checkpoint.pth.tar-epoch={epoch}")
+
+        # THIS WAS JUST FOR DUMMY SAKE
+        # if LOAD_MODEL:
+        #     step = load_checkpoint(torch.load(f'{OUTPUT_FOLDER}my_checkpoint.pth.tar-epoch={epoch}'), DUMMY_model, DUMMY_optimizer)
 
         # --TRAINING TIME----------------------------------------------------------------------------------------------
         # Set the model to train mode
