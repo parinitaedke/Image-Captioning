@@ -127,8 +127,6 @@ def train():
     train_mean_loss, val_mean_loss = [], []
 
     for epoch in range(NUM_EPOCHS):
-        # Uncomment the line below to see a couple of test cases
-        print_examples(model, DEVICE, train_dataset)
 
         if SAVE_MODEL:
             checkpoint = {
